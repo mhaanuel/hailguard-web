@@ -93,6 +93,73 @@
     flex-shrink: 0;
   }
 
+  /* --- Stato meteo --- */
+  .stato-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--teal);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .stato-main {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .stato-temp {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--slate);
+  }
+  .stato-cond {
+    font-size: 0.92rem;
+    color: var(--slate-soft);
+  }
+  .stato-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    font-size: 0.8rem;
+    color: var(--slate-soft);
+  }
+  .stato-empty {
+    text-align: center;
+    color: var(--slate-soft);
+    font-size: 0.88rem;
+    padding: 16px;
+    margin-top: 20px;
+    background: var(--white);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+  }
+
+  /* --- Punti di monitoraggio fissi (statici, non letti dal foglio) --- */
+  .fixed-points {
+    background: var(--sky);
+    border: 1px dashed var(--slate-soft);
+    border-radius: 10px;
+    padding: 4px 18px;
+  }
+  .fixed-point {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.92rem;
+    color: var(--slate);
+  }
+  .fixed-point:last-child { border-bottom: none; }
+  .fixed-points-hint {
+    font-size: 0.78rem;
+    color: var(--slate-soft);
+    margin: 8px 2px 0;
+  }
+
   .empty {
     text-align: center;
     color: var(--slate-soft);
@@ -206,6 +273,18 @@
 
 <main>
 
+  <div id="stato-meteo"></div>
+
+  <div class="section-title">Punti di monitoraggio fissi</div>
+  <div class="fixed-points">
+    <div class="fixed-point">Via Francesco Rossi</div>
+    <div class="fixed-point">Contrada Valle Orta</div>
+    <div class="fixed-point">Bivio Salaria</div>
+    <div class="fixed-point">Bivio Offida</div>
+    <div class="fixed-point">Bivio Santa Lucia</div>
+  </div>
+  <p class="fixed-points-hint">Monitorati in automatico dal sistema radar — non modificabili da qui.</p>
+
   <div id="pin-gate">
     <h2>Aggiungi una località</h2>
     <p>Inserisci il PIN per sbloccare l'aggiunta di nuove zone da monitorare. La lista qui sotto resta sempre visibile a chiunque abbia questo link.</p>
@@ -269,6 +348,43 @@
     const d = document.createElement('div');
     d.textContent = str;
     return d.innerHTML;
+  }
+
+  function renderStato(stato) {
+    const el = document.getElementById('stato-meteo');
+    if (!stato) {
+      el.innerHTML = '<div class="stato-empty">Stato non ancora disponibile.</div>';
+      return;
+    }
+    const temp = (stato.temperatura !== undefined && stato.temperatura !== null)
+      ? `${Number(stato.temperatura).toFixed(1)}°C` : 'n/d';
+    const pioggia = (stato.pioggia !== undefined && stato.pioggia !== null)
+      ? `${Number(stato.pioggia).toFixed(1)} mm` : 'n/d';
+    const condizione = stato.condizione || 'n/d';
+    const dataOra = stato.dataOra || '';
+
+    el.innerHTML = `
+      <div class="stato-card">
+        <div class="stato-main">
+          <span class="stato-temp">${escapeHtml(temp)}</span>
+          <span class="stato-cond">${escapeHtml(condizione)}</span>
+        </div>
+        <div class="stato-meta">
+          <span>Pioggia: ${escapeHtml(pioggia)}</span>
+          ${dataOra ? `<span>Agg. ${escapeHtml(dataOra)}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function loadStato() {
+    fetch(`${API_URL}?action=getStato`)
+      .then(r => r.json())
+      .then(data => renderStato(data.stato))
+      .catch(() => {
+        document.getElementById('stato-meteo').innerHTML =
+          '<div class="stato-empty">Impossibile leggere lo stato meteo in questo momento.</div>';
+      });
   }
 
   function loadLocations() {
@@ -371,6 +487,7 @@
       });
   });
 
+  loadStato();
   loadLocations();
 </script>
 
