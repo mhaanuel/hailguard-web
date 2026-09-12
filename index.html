@@ -93,6 +93,26 @@
     flex-shrink: 0;
   }
 
+  /* --- Banner allerta grandine --- */
+  .allerta-banner {
+    background: var(--amber);
+    color: var(--white);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 20px;
+  }
+  .allerta-titolo {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+  .allerta-riga {
+    font-size: 0.88rem;
+    padding: 6px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  .allerta-riga:first-of-type { border-top: none; }
+
   /* --- Stato meteo --- */
   .stato-card {
     background: var(--white);
@@ -283,6 +303,8 @@
 
 <main>
 
+  <div id="banner-allerta"></div>
+
   <div id="stato-meteo"></div>
 
   <div class="section-title">Punti di monitoraggio fissi</div>
@@ -397,6 +419,54 @@
       });
   }
 
+  function parseDataOra(str) {
+    // Stesso formato di dataOra usato per lo stato: "GG-MM-HH:MM AAAA"
+    const m = /^(\d{2})-(\d{2})-(\d{2}):(\d{2}) (\d{4})$/.exec(str || '');
+    if (!m) return null;
+    const [, dd, mm, hh, min, yyyy] = m;
+    return new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min));
+  }
+
+  function renderAllerta(allerte) {
+    const el = document.getElementById('banner-allerta');
+    if (!allerte || allerte.length === 0) {
+      el.innerHTML = '';
+      return;
+    }
+
+    const recenti = allerte.filter(a => {
+      const d = parseDataOra(a.dataOra);
+      return d !== null && (Date.now() - d.getTime()) / 60000 <= 30;
+    });
+
+    if (recenti.length === 0) {
+      el.innerHTML = '';
+      return;
+    }
+
+    const righe = recenti.map(a => `
+      <div class="allerta-riga">
+        <strong>${escapeHtml(a.destinazione)}</strong> —
+        VMI ${escapeHtml(String(a.vmi))}, POH ${escapeHtml(String(a.poh))},
+        ETA ${escapeHtml(String(a.etaMin))} min, ${escapeHtml(String(a.distanzaKm))} km
+      </div>
+    `).join('');
+
+    el.innerHTML = `
+      <div class="allerta-banner">
+        <div class="allerta-titolo">⚠️ Allerta grandine in corso</div>
+        ${righe}
+      </div>
+    `;
+  }
+
+  function loadAllerta() {
+    fetch(`${API_URL}?action=getAllerta`)
+      .then(r => r.json())
+      .then(data => renderAllerta(data.allerte))
+      .catch(() => {});
+  }
+
   function loadLocations() {
     fetch(API_URL)
       .then(r => r.json())
@@ -498,6 +568,8 @@
   });
 
   loadStato();
+  loadAllerta();
+  setInterval(() => { loadStato(); loadAllerta(); }, 300000);
   loadLocations();
 </script>
 
