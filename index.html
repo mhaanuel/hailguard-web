@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HailGuard — Monitoraggio grandine</title>
+<style>
+  :root {
+    --sky: #eef2f5;
+    --slate: #24313f;
+    --slate-soft: #435060;
+    --line: #d6dde3;
+    --amber: #c97a2b;
+    --teal: #2f6f77;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--sky);
+    color: var(--slate);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--slate);
+    color: var(--white);
+    padding: 28px 20px 24px;
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header p {
+    margin: 0;
+    color: #b7c2cc;
+    font-size: 0.92rem;
+  }
+
+  main {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+  }
+
+  /* --- PIN gate --- */
+  #pin-gate {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+    margin-top: 20px;
+  }
+  #pin-gate h2 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+  }
+  #pin-gate p {
+    margin: 0 0 16px;
+    color: var(--slate-soft);
+    font-size: 0.9rem;
+  }
+
+  /* --- Location list --- */
+  .loc-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .loc-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .loc-coords {
+    color: var(--slate-soft);
+    font-size: 0.85rem;
+    margin-top: 2px;
+  }
+  .loc-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--teal);
+    flex-shrink: 0;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--slate-soft);
+    padding: 40px 20px;
+    font-size: 0.92rem;
+  }
+
+  /* --- Form --- */
+  .section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--slate-soft);
+    margin: 28px 0 10px;
+    text-transform: none;
+  }
+
+  form {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--slate-soft);
+    margin: 12px 0 4px;
+  }
+  label:first-of-type { margin-top: 0; }
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--slate);
+    background: var(--sky);
+  }
+  input:focus {
+    outline: 2px solid var(--teal);
+    outline-offset: 1px;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 18px;
+    border: none;
+    border-radius: 7px;
+    background: var(--slate);
+    color: var(--white);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button:hover { background: #1a242f; }
+  button:disabled { background: #9aa5ae; cursor: not-allowed; }
+
+  .msg {
+    margin-top: 12px;
+    font-size: 0.88rem;
+    padding: 10px 12px;
+    border-radius: 7px;
+    display: none;
+  }
+  .msg.ok { display: block; background: #e6f1ef; color: var(--teal); }
+  .msg.err { display: block; background: #f6e9e2; color: var(--amber); }
+
+  .hint {
+    font-size: 0.78rem;
+    color: var(--slate-soft);
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>HailGuard</h1>
+  <p>Monitoraggio allerta grandine — Appignano del Tronto e dintorni</p>
+</header>
+
+<main>
+
+  <div id="pin-gate">
+    <h2>Aggiungi una località</h2>
+    <p>Inserisci il PIN per sbloccare l'aggiunta di nuove zone da monitorare. La lista qui sotto resta sempre visibile a chiunque abbia questo link.</p>
+    <label for="pin-input">PIN</label>
+    <input type="password" id="pin-input" inputmode="numeric" placeholder="•••••" maxlength="10">
+    <button id="pin-unlock">Sblocca</button>
+    <div class="msg err" id="pin-msg"></div>
+  </div>
+
+  <div class="section-title">Località monitorate</div>
+  <div id="locations"></div>
+
+  <div id="add-section" style="display:none;">
+    <div class="section-title">Aggiungi località</div>
+    <form id="add-form">
+      <label for="nome">Nome</label>
+      <input type="text" id="nome" placeholder="es. Ascoli Piceno centro" required>
+
+      <label for="lat">Latitudine</label>
+      <input type="text" id="lat" placeholder="es. 42.8536" required>
+
+      <label for="lon">Longitudine</label>
+      <input type="text" id="lon" placeholder="es. 13.5750" required>
+
+      <div class="hint">Per trovare le coordinate: cerca il luogo su Google Maps, tasto destro sul punto → compaiono lat/lon in alto.</div>
+
+      <button type="submit" id="add-submit">Aggiungi</button>
+      <div class="msg" id="add-msg"></div>
+    </form>
+  </div>
+
+</main>
+
+<script>
+  // Sostituisci con l'URL del tuo deployment Apps Script (finisce in /exec)
+  const API_URL = "https://script.google.com/macros/s/AKfycbweJG0S_jONCq6AwKdS4YSwV3o4HF98n9IEmMtwvyrrzrR5KVGfLkpuZdTbN0TrfGt-/exec";
+
+  let unlockedPin = sessionStorage.getItem('hailguard_pin') || null;
+
+  function renderLocations(locations) {
+    const container = document.getElementById('locations');
+    if (!locations || locations.length === 0) {
+      container.innerHTML = '<div class="empty">Nessuna località ancora aggiunta.</div>';
+      return;
+    }
+    container.innerHTML = locations.map(loc => `
+      <div class="loc-card">
+        <div>
+          <div class="loc-name">${escapeHtml(loc.nome)}</div>
+          <div class="loc-coords">${Number(loc.lat).toFixed(4)}, ${Number(loc.lon).toFixed(4)}</div>
+        </div>
+        <div class="loc-dot" title="Monitorata"></div>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function loadLocations() {
+    fetch(API_URL)
+      .then(r => r.json())
+      .then(data => renderLocations(data.locations))
+      .catch(() => {
+        document.getElementById('locations').innerHTML =
+          '<div class="empty">Impossibile contattare il backend in questo momento.</div>';
+      });
+  }
+
+  function unlockAddSection() {
+    document.getElementById('pin-gate').style.display = 'none';
+    document.getElementById('add-section').style.display = 'block';
+  }
+
+  if (unlockedPin) unlockAddSection();
+
+  document.getElementById('pin-unlock').addEventListener('click', () => {
+    const pin = document.getElementById('pin-input').value.trim();
+    const msg = document.getElementById('pin-msg');
+    if (!pin) {
+      msg.textContent = 'Inserisci il PIN.';
+      msg.style.display = 'block';
+      return;
+    }
+    // Il PIN viene verificato davvero solo al momento dell'invio (doPost);
+    // qui lo salviamo solo per sbloccare il form e usarlo nella richiesta.
+    unlockedPin = pin;
+    sessionStorage.setItem('hailguard_pin', pin);
+    msg.style.display = 'none';
+    unlockAddSection();
+  });
+
+  document.getElementById('add-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('nome').value.trim();
+    const lat = document.getElementById('lat').value.trim();
+    const lon = document.getElementById('lon').value.trim();
+    const btn = document.getElementById('add-submit');
+    const msg = document.getElementById('add-msg');
+
+    btn.disabled = true;
+    btn.textContent = 'Aggiunta in corso...';
+    msg.className = 'msg';
+    msg.style.display = 'none';
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ pin: unlockedPin, nome, lat, lon })
+    })
+      .then(r => r.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.textContent = 'Aggiungi';
+        if (data.error) {
+          msg.textContent = data.error === 'PIN errato'
+            ? 'PIN errato — controlla e riprova.'
+            : data.error;
+          msg.className = 'msg err';
+          msg.style.display = 'block';
+          if (data.error === 'PIN errato') {
+            sessionStorage.removeItem('hailguard_pin');
+            unlockedPin = null;
+          }
+        } else {
+          msg.textContent = 'Località aggiunta.';
+          msg.className = 'msg ok';
+          msg.style.display = 'block';
+          document.getElementById('add-form').reset();
+          loadLocations();
+        }
+      })
+      .catch(() => {
+        btn.disabled = false;
+        btn.textContent = 'Aggiungi';
+        msg.textContent = 'Errore di connessione — riprova.';
+        msg.className = 'msg err';
+        msg.style.display = 'block';
+      });
+  });
+
+  loadLocations();
+</script>
+
+</body>
+</html>
