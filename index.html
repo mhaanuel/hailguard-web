@@ -142,18 +142,28 @@
 
   /* --- Punti di monitoraggio fissi (statici, non letti dal foglio) --- */
   .fixed-points {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
     background: var(--sky);
     border: 1px dashed var(--slate-soft);
     border-radius: 10px;
-    padding: 4px 18px;
+    padding: 14px;
   }
   .fixed-point {
-    padding: 10px 0;
-    border-bottom: 1px solid var(--line);
-    font-size: 0.92rem;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 10px 8px;
+    font-size: 0.88rem;
     color: var(--slate);
+    text-align: center;
   }
-  .fixed-point:last-child { border-bottom: none; }
+  @media (max-width: 480px) {
+    .fixed-points {
+      grid-template-columns: 1fr;
+    }
+  }
   .fixed-points-hint {
     font-size: 0.78rem;
     color: var(--slate-soft);
