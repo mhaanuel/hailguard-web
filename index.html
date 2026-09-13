@@ -317,38 +317,43 @@
   </div>
   <p class="fixed-points-hint">Monitorati in automatico dal sistema radar — non modificabili da qui.</p>
 
-  <div id="pin-gate">
-    <h2>Aggiungi una località</h2>
-    <p>Inserisci il PIN per sbloccare l'aggiunta di nuove zone da monitorare. La lista qui sotto resta sempre visibile a chiunque abbia questo link.</p>
-    <label for="pin-input">PIN</label>
-    <input type="password" id="pin-input" inputmode="numeric" placeholder="•••••" maxlength="10">
-    <button id="pin-unlock">Sblocca</button>
-    <div class="msg err" id="pin-msg"></div>
-  </div>
-
   <div class="section-title">Località monitorate</div>
   <div id="locations"></div>
 
-  <button id="show-add-btn" class="ghost-btn" style="display:none;">+ Aggiungi una nuova località</button>
+  <!-- Sezione "Aggiungi località" disattivata il 13/9/2026 — PIN verificato solo lato
+       client per lo sblocco, verifica reale solo su invio. Per riattivare: rimuovi lo
+       style="display:none" (o la classe) qui sotto. -->
+  <div id="add-location-section" style="display:none;">
+    <div id="pin-gate">
+      <h2>Aggiungi una località</h2>
+      <p>Inserisci il PIN per sbloccare l'aggiunta di nuove zone da monitorare. La lista qui sotto resta sempre visibile a chiunque abbia questo link.</p>
+      <label for="pin-input">PIN</label>
+      <input type="password" id="pin-input" inputmode="numeric" placeholder="•••••" maxlength="10">
+      <button id="pin-unlock">Sblocca</button>
+      <div class="msg err" id="pin-msg"></div>
+    </div>
 
-  <div id="add-section" style="display:none;">
-    <div class="section-title">Aggiungi località</div>
-    <button type="button" id="back-btn" class="link-btn">← Torna alla lista</button>
-    <form id="add-form">
-      <label for="nome">Nome</label>
-      <input type="text" id="nome" placeholder="es. Ascoli Piceno centro" required>
+    <button id="show-add-btn" class="ghost-btn" style="display:none;">+ Aggiungi una nuova località</button>
 
-      <label for="lat">Latitudine</label>
-      <input type="text" id="lat" placeholder="es. 42.8536" required>
+    <div id="add-section" style="display:none;">
+      <div class="section-title">Aggiungi località</div>
+      <button type="button" id="back-btn" class="link-btn">← Torna alla lista</button>
+      <form id="add-form">
+        <label for="nome">Nome</label>
+        <input type="text" id="nome" placeholder="es. Ascoli Piceno centro" required>
 
-      <label for="lon">Longitudine</label>
-      <input type="text" id="lon" placeholder="es. 13.5750" required>
+        <label for="lat">Latitudine</label>
+        <input type="text" id="lat" placeholder="es. 42.8536" required>
 
-      <div class="hint">Per trovare le coordinate: cerca il luogo su Google Maps, tasto destro sul punto → compaiono lat/lon in alto.</div>
+        <label for="lon">Longitudine</label>
+        <input type="text" id="lon" placeholder="es. 13.5750" required>
 
-      <button type="submit" id="add-submit">Aggiungi</button>
-      <div class="msg" id="add-msg"></div>
-    </form>
+        <div class="hint">Per trovare le coordinate: cerca il luogo su Google Maps, tasto destro sul punto → compaiono lat/lon in alto.</div>
+
+        <button type="submit" id="add-submit">Aggiungi</button>
+        <div class="msg" id="add-msg"></div>
+      </form>
+    </div>
   </div>
 
 </main>
@@ -420,10 +425,10 @@
   }
 
   function parseDataOra(str) {
-    // Stesso formato di dataOra usato per lo stato: "GG-MM-HH:MM AAAA"
-    const m = /^(\d{2})-(\d{2})-(\d{2}):(\d{2}) (\d{4})$/.exec(str || '');
+    // Stesso formato di dataOra usato per lo stato: "GG-MM-AAAA HH:MM"
+    const m = /^(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2})$/.exec(str || '');
     if (!m) return null;
-    const [, dd, mm, hh, min, yyyy] = m;
+    const [, dd, mm, yyyy, hh, min] = m;
     return new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min));
   }
 
