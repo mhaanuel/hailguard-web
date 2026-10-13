@@ -387,16 +387,24 @@
     return d.innerHTML;
   }
 
+  // Formatta un valore numerico con 1 decimale e unita'; tutto cio' che non
+  // e' un numero finito (null, '', 'n/d', 'unknown', NaN...) diventa 'n/d'.
+  function formattaNumero(valore, unita) {
+    if (valore === undefined || valore === null) return 'n/d';
+    const s = String(valore).trim().replace(',', '.');
+    if (s === '') return 'n/d';
+    const n = Number(s);
+    return Number.isFinite(n) ? `${n.toFixed(1)}${unita}` : 'n/d';
+  }
+
   function renderStato(stato) {
     const el = document.getElementById('stato-meteo');
     if (!stato) {
       el.innerHTML = '<div class="stato-empty">Stato non ancora disponibile.</div>';
       return;
     }
-    const temp = (stato.temperatura !== undefined && stato.temperatura !== null)
-      ? `${Number(stato.temperatura).toFixed(1)}°C` : 'n/d';
-    const pioggia = (stato.pioggia !== undefined && stato.pioggia !== null)
-      ? `${Number(stato.pioggia).toFixed(1)} mm` : 'n/d';
+    const temp = formattaNumero(stato.temperatura, '°C');
+    const pioggia = formattaNumero(stato.pioggia, ' mm');
     const condizione = stato.condizione || 'n/d';
     const dataOra = stato.dataOra || '';
 
@@ -407,7 +415,7 @@
           <span class="stato-cond">${escapeHtml(condizione)}</span>
         </div>
         <div class="stato-meta">
-          <span>Pioggia: ${escapeHtml(pioggia)}</span>
+          <span>Pioggia oggi: ${escapeHtml(pioggia)}</span>
           ${dataOra ? `<span>Agg. ${escapeHtml(dataOra)}</span>` : ''}
         </div>
       </div>
